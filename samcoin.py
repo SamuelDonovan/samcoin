@@ -19,21 +19,28 @@ class block:
 		self.time_stamp = time_stamp
 		self.data = data
 		self.previous_hash = previous_hash
+		self.nonce = 0
 		self.hash = self.calculate_hash()
 
 	def __str__(self):
-		return f'{self.index}, {self.time_stamp}, {self.data}, {self.previous_hash}, {self.hash}'
-
-	#def __repr__(self):
-	#	return [{self.index}, {self.time_stamp}] 
+		return f'{self.index}, {self.time_stamp}, {self.data}, {self.previous_hash}, {self.hash}, {self.nonce}'
 
 	def calculate_hash(self):
-		to_hash = (str(self.index) + self.time_stamp + self.data + self.previous_hash).encode()
+		to_hash = (str(self.index) + self.time_stamp + self.data + self.previous_hash + str(self.nonce)).encode()
 		return hashlib.sha256(to_hash).hexdigest()
+
+	def mine_block(self, difficulty):
+		z = "0"
+		while(self.hash[0:difficulty] != z.zfill(difficulty)):
+			self.nonce += 1
+			self.hash = self.calculate_hash()
+		print("Block Mined! : " + self.hash)
+
 
 class block_chain:
 	def __init__(self):
 		self.chain = [self.create_genesis_block()]
+		self.difficulty = 3
 
 	def create_genesis_block(self):
 		return block(0, "1/1/1970", "I am genesis block - fear me", "Not a hash - shrug")
@@ -43,7 +50,7 @@ class block_chain:
 
 	def add_block(self, index, time_stamp, data):
 		new_block = block(index, time_stamp, data, self.get_latest_block().hash)
-		new_block.hash = new_block.calculate_hash()
+		new_block.mine_block(self.difficulty)
 		self.chain.append(new_block)
 
 def header():
@@ -55,7 +62,7 @@ def print_table():
 		arr = np.vstack((arr, np.transpose(str(samcoin.chain[i]).split(','))))
 
 	df = pd.DataFrame(arr)
-	df_col_header = ['Index', 'Time Stamp', 'Data', 'Previous Block Hash', 'Current Block Hash']
+	df_col_header = ['Index', 'Time Stamp', 'Data', 'Previous Block Hash', 'Current Block Hash', 'Nonce']
 	df.columns = df_col_header
 
 	with open('samcoin_ledger.html', 'w') as f:
@@ -68,6 +75,7 @@ try_to_cheat = 0
 
 samcoin = block_chain()
 for i in range(1,30):
+	print("Mining block " + str(i) + "...")
 	if(try_to_cheat == 1):
 		if (i == 5):
 			samcoin.add_block(i,  "05/" + str(i) + "/2021",  "sam to sam : 100000 samcoin")
@@ -75,5 +83,4 @@ for i in range(1,30):
 			samcoin.add_block(i,  "05/" + str(i) + "/2021",  "sam to sam : 10 samcoin")
 	else:
 		samcoin.add_block(i,  "05/" + str(i) + "/2021",  "sam to sam : 10 samcoin")
-
 print_table()
